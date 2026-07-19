@@ -11,9 +11,9 @@ function isSupabaseConfigured(): boolean {
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   
   // Check if credentials are real (not placeholder values)
-  const hasRealUrl = url && url.includes('supabase.co') && !url.includes('your-');
-  const hasRealKey = key && key.length > 50 && !key.includes('your-');
-  
+  const hasRealUrl = !!(url && url.includes('supabase.co') && !url.includes('your-'));
+  const hasRealKey = !!(key && key.length > 50 && !key.includes('your-'));
+
   return hasRealUrl && hasRealKey;
 }
 

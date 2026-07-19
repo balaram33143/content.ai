@@ -10,6 +10,7 @@ interface SettingsContextValue {
   updateSettings: (partial: Partial<AppSettings>) => void;
   webhookUrl: string;
   webhookConfigured: boolean;
+  demoMode: boolean;
   connectionStatus: N8nHealthResult | null;
   testing: boolean;
   testConnection: () => Promise<N8nHealthResult>;
@@ -52,7 +53,8 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   }, [settings, loaded]);
 
   const webhookUrl = settings.webhookUrl || ENV_WEBHOOK_URL;
-  const webhookConfigured = webhookUrl.trim().length > 0;
+  const webhookConfigured = true;
+  const demoMode = webhookUrl.trim().length === 0;
 
   const testConnection = useCallback(async (): Promise<N8nHealthResult> => {
     setTesting(true);
@@ -79,6 +81,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         updateSettings,
         webhookUrl,
         webhookConfigured,
+        demoMode,
         connectionStatus,
         testing,
         testConnection,

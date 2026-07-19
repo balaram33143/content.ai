@@ -69,7 +69,7 @@ type SubmitPhase = 'idle' | 'connecting' | 'submitting' | 'waiting' | 'completed
 
 export default function GeneratePage() {
   const router = useRouter();
-  const { webhookUrl, webhookConfigured, connectionStatus, testing, testConnection } = useSettings();
+  const { webhookUrl, webhookConfigured, demoMode, connectionStatus, testing, testConnection } = useSettings();
   const [submitting, setSubmitting] = useState(false);
   const [phase, setPhase] = useState<SubmitPhase>('idle');
   const [error, setError] = useState<N8nError | null>(null);
@@ -100,7 +100,7 @@ export default function GeneratePage() {
   const humanOpinion = watch('humanOpinion') || '';
 
   const isConnected = connectionStatus?.connected === true;
-  const canGenerate = !submitting;  // Allow generation with mock database or real webhook
+  const canGenerate = !submitting;  // Allow generation in demo mode or with real webhook
 
   const onSubmit = async (values: GenerationFormValues) => {
     if (submitting) return;
@@ -115,30 +115,47 @@ export default function GeneratePage() {
 
     try {
       setPhase('submitting');
-      
-      // If webhook is not configured, simulate success with mock data
-      if (!webhookConfigured) {
+
+      // Demo mode: generate rich mock content locally without calling n8n
+      if (demoMode) {
         setPhase('waiting');
         workflow.completeAll();
-        
-        // Simulate workflow completion
+
+        const result = buildDemoResult(values, videoId);
+
         if (record) {
           await updateGeneration(record.id, {
             status: 'completed',
+            linkedin_post: result.linkedinPost,
+            x_post: result.xPost,
+            facebook_post: result.facebookPost,
+            blog_post: result.blogPost,
+            image_url: result.imageUrl,
+            report_url: result.reportUrl,
+            folder_url: result.folderUrl,
+            metadata_file_url: result.metadataFileUrl,
           });
         }
 
         setPhase('completed');
-        toast.success('Content generated successfully! (Mock mode)');
-        
-        // Redirect to history after a short delay
-        setTimeout(() => {
-          router.push('/dashboard/history');
-        }, 1500);
-        
+        toast.success('Content generated successfully! (Demo mode)');
+
+        const query = new URLSearchParams({
+          linkedin: result.linkedinPost,
+          x: result.xPost,
+          facebook: result.facebookPost,
+          blog: result.blogPost,
+          image: result.imageUrl,
+          report: result.reportUrl,
+          folder: result.folderUrl,
+          metadata: result.metadataFileUrl,
+          videoId: videoId || '',
+        }).toString();
+
+        router.push(`/dashboard/results?${query}`);
         return;
       }
-      
+
       const data = await submitWorkflow(values, webhookUrl);
       setPhase('waiting');
 
@@ -227,7 +244,7 @@ export default function GeneratePage() {
       </div>
 
       {/* Connection banner */}
-      {webhookConfigured && !isConnected && (
+      {!demoMode && webhookConfigured && !isConnected && (
         <Card className="glass-card rounded-xl p-4 border-amber-500/30 bg-amber-500/5">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -574,6 +591,88 @@ export default function GeneratePage() {
       </div>
     </div>
   );
+}
+
+function buildDemoResult(values: GenerationFormValues, videoId: string | null): GenerationResult {
+  const platforms = values.platforms.join(', ');
+  const insight = values.humanOpinion?.trim() || `a ${values.tone.toLowerCase()} take on ${values.theme}`;
+  const hook =
+    values.tone === 'Inspirational'
+      ? 'What if everything you knew about ' + values.theme + ' was backwards?'
+      : values.tone === 'Opinionated'
+      ? 'Hot take: most ' + values.audience.toLowerCase() + ' get ' + values.theme + ' wrong.'
+      : values.tone === 'Storytelling'
+      ? 'Last week I broke down a YouTube video on ' + values.theme + '. Here is what changed for me.'
+      : 'Here are ' + values.audience + '-ready insights from a deep dive into ' + values.theme + '.';
+
+  const linkedinPost = [
+    hook,
+    '',
+    `I just ran this video through ContentForge and pulled out the signal for ${values.audience}.`,
+    '',
+    `Three things worth your attention:`,
+    `  1. The core thesis reframed around ${values.theme} for a ${values.tone.toLowerCase()} voice.`,
+    `  2. A practical angle ${values.audience.toLowerCase()} can act on this week.`,
+    `  3. ${insight}`,
+    '',
+    `Platforms covered: ${platforms}.`,
+    `Source video: https://youtu.be/${videoId || 'demo'}`,
+    '',
+    `#ContentForge #${values.theme.replace(/\s+/g, '')} #${values.audience}`,
+  ].join('\n');
+
+  const xPost = [
+    `${hook}`,
+    '',
+    `For ${values.audience}: ${values.theme}, ${values.tone.toLowerCase()} angle.`,
+    `${insight}`,
+    '',
+    `Via ContentForge — https://youtu.be/${videoId || 'demo'}`,
+  ].join('\n');
+
+  const facebookPost = [
+    `${hook}`,
+    '',
+    `Just turned a YouTube video into a full content suite on ${values.theme}.`,
+    `Tone: ${values.tone}. Audience: ${values.audience}.`,
+    `${insight}`,
+    '',
+    `Watch the source: https://youtu.be/${videoId || 'demo'}`,
+  ].join('\n');
+
+  const blogPost = [
+    `# ${values.theme}: A ${values.tone} Breakdown for ${values.audience}`,
+    '',
+    `*Source: https://youtu.be/${videoId || 'demo'}*`,
+    '',
+    `## Introduction`,
+    `${hook}`,
+    '',
+    `## Key Insights`,
+    `1. The video's central argument, distilled for ${values.audience}.`,
+    `2. ${insight}`,
+    `3. An actionable next step you can ship this week.`,
+    '',
+    `## Why It Matters`,
+    `For ${values.audience} working on ${values.theme}, this reframes the conversation. The ${values.tone.toLowerCase()} lens keeps it grounded and useful rather than abstract.`,
+    '',
+    `## Takeaway`,
+    `Pick one insight, apply it to your next project on ${values.theme}, and measure the result.`,
+    '',
+    `---`,
+    `Generated by ContentForge AI. Platforms: ${platforms}.`,
+  ].join('\n');
+
+  return {
+    linkedinPost,
+    xPost,
+    facebookPost,
+    blogPost,
+    imageUrl: 'https://images.pexels.com/photos/3861969/pexels-photo-3861969.jpeg',
+    reportUrl: 'https://docs.google.com/document/d/demo-report/edit',
+    folderUrl: 'https://drive.google.com/drive/folders/demo-folder',
+    metadataFileUrl: 'https://drive.google.com/file/d/demo-metadata/view',
+  };
 }
 
 function parseResult(data: Record<string, unknown>): GenerationResult {
