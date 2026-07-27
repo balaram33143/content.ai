@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Sparkles, Loader as Loader2, Youtube, Mail, Palette, Target, Users, Lightbulb, Check } from 'lucide-react'
 import { PLATFORMS, TONES, THEMES, AUDIENCES } from '../config'
 import { buildDemoResult } from '../lib/demo-content'
-import { createGeneration, completeGeneration, failGeneration } from '../lib/generations'
+import { createGeneration, completeGeneration } from '../lib/generations'
 import type { GenerationFormValues, Platform, Tone, Theme, Audience } from '../types'
 
 function extractVideoId(url: string): string | null {

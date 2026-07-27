@@ -78,52 +78,208 @@ function pickImage(theme: Theme, seed: string): string {
   return pool[hash % pool.length]
 }
 
-// ─── Improved AI image generation prompts ────────────────────────────────────
-// Matches the v4 workflow node 15 "Image_Prompt_Generator" which generates
-// a professional social media image prompt based on the platform content.
-// Each theme gets a detailed, visually rich prompt with composition,
-// color palette, style, and mood guidance.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// IMPROVED AI IMAGE GENERATION PROMPTS
+// Each prompt is a complete art-direction brief with:
+//   1. Subject & Scene  — what the image depicts
+//   2. Composition     — framing, rule-of-thirds, depth, focal point
+//   3. Lighting         — light source, mood, quality
+//   4. Color Palette    — exact hues, gradients, grading
+//   5. Style            — illustration/photography hybrid, rendering hints
+//   6. Tone Adaptation  — how the selected tone shifts the visual mood
+//   7. Audience Hook    — visual metaphors that resonate with the audience
+//   8. Technical Specs  — aspect ratio, resolution, negative prompts
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+interface ImagePromptParts {
+  subject: string
+  composition: string
+  lighting: string
+  colorPalette: string
+  style: string
+  negativePrompt: string
+}
+
+const THEME_PROMPT_PARTS: Record<Theme, ImagePromptParts> = {
+  'Career Growth': {
+    subject: `A professional figure ascending a glowing staircase made of stacked achievement badges and milestone icons. Each step represents a career level — from junior to senior to executive. The figure is mid-climb, reaching for the next step, with a confident forward-leaning posture. Behind them, a faint trail of past achievements fades into the background.`,
+    composition: `Rule-of-thirds composition with the figure positioned at the left-third intersection point. The staircase rises diagonally from bottom-left to upper-right, creating a natural leading line that pulls the viewer's eye upward. Generous negative space in the upper-right for headline text overlay. Shallow depth of field — the figure is tack-sharp while the lower steps softly blur.`,
+    lighting: `Cinematic rim lighting from the upper-right, wrapping the figure in a warm golden glow that separates them from the background. Soft fill light from camera-left to preserve detail in the face and hands. The staircase steps emit a subtle internal luminescence, as if each achievement is lit from within. Overall mood: aspirational, warm, forward-looking.`,
+    colorPalette: `Deep navy (#0a1628) background transitioning to a rich teal (#0d4f5c) in the mid-tones. The figure is lit with warm amber (#f5a623) and soft gold (#d4af37) highlights. Badge accents in electric blue (#3b82f6). Color grading: warm shadows, neutral midtones, slightly cool highlights for a premium corporate feel.`,
+    style: `Semi-realistic 3D illustration with subtle flat-design influences. Smooth, polished surfaces with soft ambient occlusion. The figure is stylized but anatomically proportional — not cartoonish, but not photorealistic. Think Apple keynote aesthetic meets LinkedIn editorial illustration. Clean, premium, trustworthy. Render at 4K with anti-aliased edges.`,
+    negativePrompt: `No text, no watermarks, no logos, no clutter, no photorealistic faces, no cartoonish proportions, no busy backgrounds, no low-resolution artifacts, no extra limbs, no distorted perspective`,
+  },
+  'Productivity': {
+    subject: `An ultra-clean, modern desk workspace seen from a top-down isometric perspective. On the desk: a sleek laptop displaying a focused task dashboard, a glowing productivity timer showing 25:00, a neatly stacked set of color-coded task blocks arranged in a grid, a minimalist desk lamp, and a single coffee cup with steam rising. The task blocks form a satisfying visual rhythm — some completed (filled), some pending (outlined).`,
+    composition: `Isometric top-down angle at approximately 30-degree tilt. The desk is centered with all elements arranged in a deliberate, grid-like pattern that satisfies the eye. Leading lines created by the laptop edge and task block grid draw the viewer to the timer as the focal point. Generous margin around the desk for text overlay. Perfect symmetry with intentional asymmetry in the task blocks for visual interest.`,
+    lighting: `Soft, diffused overhead lighting creating gentle, even illumination across the entire scene. The laptop screen and timer emit their own subtle glow, creating pools of cool blue light on the desk surface. The desk lamp adds a warm amber accent light from the upper-left corner. No harsh shadows — everything feels calm, controlled, and focused. Mood: serene efficiency.`,
+    colorPalette: `Warm white desk surface (#f8f6f2) with soft amber undertones. Task blocks in a harmonious set: sage green (#84cc16) for completed, soft blue (#3b82f6) for in-progress, warm gray (#94a3b8) for pending. Laptop screen glow in cool cyan (#06b6d4). Coffee cup in matte black. Overall palette: warm, inviting, organized. Color grading: bright, clean, high-key.`,
+    style: `Isometric flat-design illustration with subtle 3D depth via soft shadows and gradients. Clean vector-style shapes with rounded corners. Minimal texture — smooth surfaces only. Think Notion aesthetic meets premium productivity app marketing. Crisp, geometric, satisfying. Render at 4K with perfect pixel alignment.`,
+    negativePrompt: `No text, no watermarks, no messy elements, no photorealistic textures, no harsh shadows, no clutter, no random objects, no distorted geometry, no busy patterns, no low-res artifacts`,
+  },
+  'Leadership': {
+    subject: `A commanding silhouette of a leader standing at the prow of a stylized ship, facing forward into a vast, open horizon. Behind them, a crew of smaller figures works in coordinated motion. The leader's posture is upright, shoulders back, one hand pointing toward the horizon. The ship is a modern, abstracted vessel — not literal, but suggestive of direction and purpose.`,
+    composition: `Centered, symmetrical composition with the leader as the vertical focal point at the exact center. The horizon line sits at the lower-third, giving the sky and the forward vision dominant space. The crew forms a subtle V-formation behind the leader, echoing the shape of birds in flight. Massive negative space in the upper two-thirds for headline text. The horizon line creates a powerful sense of depth and scale.`,
+    lighting: `Golden-hour backlighting from the horizon, creating a dramatic silhouette of the leader and crew. The light wraps around the leader's outline, creating a luminous edge that separates them from the dark foreground. The sky is luminous and gradient-filled. The foreground ship and crew are in deep shadow, creating high contrast. Mood: heroic, decisive, visionary.`,
+    colorPalette: `Deep charcoal foreground (#1a1a2e) transitioning to a rich golden sky (#f59e0b to #f97316) at the horizon. The leader's rim light is pure gold (#fbbf24). The sky has subtle purple-magenta undertones (#7c3aed) in the upper atmosphere. Color grading: dramatic warm highlights, cool deep shadows, cinematic contrast.`,
+    style: `Minimalist editorial illustration with strong silhouette contrast. Think New Yorker cover meets TED Talk stage design. Bold, graphic shapes with minimal detail — the power is in the silhouette and the light. The ship is abstracted to its essential geometric form. Clean, iconic, memorable. Render at 4K with smooth gradients.`,
+    negativePrompt: `No text, no watermarks, no photorealistic faces, no busy details, no cluttered backgrounds, no literal ship rigging, no cartoonish style, no low-contrast, no flat lighting`,
+  },
+  'AI': {
+    subject: `A glowing, semi-transparent neural network rendered as a 3D sculptural form, floating in dark space. Inside the network, a stylized human silhouette is visible — the neural pathways pass through and around the figure, suggesting a synthesis of human intelligence and artificial intelligence. Data particles flow along the network edges like luminous pulses of light.`,
+    composition: `Centered composition with the neural network-human hybrid as the focal point, occupying the center 60% of the frame. The network extends beyond the frame edges, suggesting infinite scale. Data particles create dynamic motion blur trails along the network edges. Negative space in the upper portion for text overlay. The figure inside is slightly off-center to the left, creating visual tension and interest.`,
+    lighting: `Self-illuminating neural network — each node and edge emits its own glow, creating a complex interplay of light sources. The dominant light is cool electric blue from the network, with secondary warm amber pulses traveling along the data streams. The human silhouette is backlit by the network's internal glow, creating an ethereal, translucent effect. No external light source — the network IS the light. Mood: futuristic, intelligent, awe-inspiring.`,
+    colorPalette: `Deep space black (#050510) background. Neural network in electric blue (#3b82f6) and cyan (#06b6d4). Data pulses in warm amber (#f59e0b) and white-hot (#fef3c7). The human silhouette glows with a soft purple-violet (#8b5cf6) inner light. Color grading: deep blacks, vibrant neon highlights, high dynamic range, HDR feel.`,
+    style: `High-end 3D render with volumetric lighting and particle effects. Glassmorphism influences — the neural network has translucent, refractive qualities. Particle simulation for data streams with motion blur. Think NVIDIA keynote visual meets sci-fi film concept art. Premium, cutting-edge, technologically sophisticated. Render at 4K with ray-traced reflections and bloom effects.`,
+    negativePrompt: `No text, no watermarks, no cartoonish robots, no cliché circuit boards, no flat colors, no low-poly models, no photorealistic faces, no cluttered composition, no low-contrast, no pixelation`,
+  },
+  'Entrepreneurship': {
+    subject: `A sleek rocket ship emerging from an open laptop, mid-launch with exhaust plumes streaming downward. Around the rocket, orbiting icons represent entrepreneurial milestones: a lightbulb (idea), a growth chart (traction), a handshake (partnership), and a coin (revenue). The laptop sits on a simple surface, its screen glowing with a launch sequence interface.`,
+    composition: `Vertical composition with the rocket ascending through the center, creating a powerful upward thrust. The laptop anchors the bottom-third of the frame, grounding the scene. Orbiting icons are arranged in a loose spiral around the rocket, creating rotational energy that contrasts with the vertical thrust. Generous sky/space area in the upper portion for text overlay. Dynamic, energetic, non-symmetrical.`,
+    lighting: `Dramatic launch lighting — the rocket exhaust creates a warm, intense orange glow from below, illuminating the laptop and surrounding icons. The upper portion of the scene is lit by a cool, ambient blue, suggesting high altitude and aspiration. Strong contrast between the warm launch zone and the cool sky. Mood: energetic, ambitious, unstoppable.`,
+    colorPalette: `Launch zone: intense orange (#f97316) and warm yellow (#fbbf24) from the exhaust. Background sky: deep blue (#1e3a8a) transitioning to dark indigo (#312e81) at the top. Rocket body: clean white (#f8fafc) with blue accents (#3b82f6). Orbiting icons: each in a different harmonious color — green (#22c55e), blue (#3b82f6), amber (#f59e0b), purple (#8b5cf6). Color grading: warm bottom, cool top, high saturation, vibrant.`,
+    style: `Modern flat-design illustration with 3D depth via shading and layering. Motion blur on the exhaust and orbiting icons to convey speed and momentum. Clean, geometric shapes. Think startup pitch deck hero image meets premium app launch marketing. Bold, energetic, optimistic. Render at 4K with smooth gradients and crisp edges.`,
+    negativePrompt: `No text, no watermarks, no photorealistic rocket, no cluttered elements, no flat lighting, no dull colors, no extra objects, no distorted shapes, no low-res, no busy background`,
+  },
+  'Marketing': {
+    subject: `A stylized megaphone at the center of the composition, transforming into a burst of interconnected social media icons (heart, comment bubble, share arrow, star). The icons radiate outward from the megaphone in dynamic, expanding waves, creating a visual ripple effect. Engagement metrics (small numbers and chart fragments) float in the outer rings, suggesting measurable impact.`,
+    composition: `Radial composition centered on the megaphone, with icon waves expanding outward in concentric rings. The megaphone is positioned slightly left-of-center, with the blast of icons expanding toward the right, creating directional flow. The outer rings fade into the background, creating depth. Upper-right quadrant has negative space for text overlay. Dynamic, expansive, engaging.`,
+    lighting: `The megaphone is the light source — it emits a warm, energetic glow that illuminates the expanding icon waves. The innermost icons are brightest, with light fading radially outward. The background is darker, creating contrast that makes the icon burst pop. Warm-to-cool gradient from the center outward. Mood: energetic, viral, exciting.`,
+    colorPalette: `Megaphone: warm coral (#f87171) and soft pink (#fb7185). Inner icon ring: vibrant coral (#fb7185) and electric blue (#3b82f6). Middle ring: teal (#14b8a6) and amber (#f59e0b). Outer ring: soft purple (#a78bfa) and cool blue (#60a5fa). Background: deep charcoal (#1e293b) with a subtle radial gradient. Color grading: vibrant, high-saturation center, fading to muted edges.`,
+    style: `Modern flat-design illustration with subtle 3D layering and glow effects. The icon waves have a slight motion blur suggesting expansion and movement. Clean, geometric icons with rounded corners. Think premium social media marketing campaign visual. Playful but professional. Energetic but not chaotic. Render at 4K with smooth gradients and bloom on the glow elements.`,
+    negativePrompt: `No text, no watermarks, no photorealistic megaphone, no cluttered icons, no dull colors, no flat composition, no random elements, no distorted shapes, no low-res, no busy background patterns`,
+  },
+  'Personal Finance': {
+    subject: `A stylized, golden coin stack growing upward from a solid foundation, with a protective shield icon wrapping around its base. A growth chart line rises alongside the coins, curving upward with an arrow at its peak. Subtle financial symbols — a percentage sign, a small house, a piggy bank — float in the background at low opacity, adding context without clutter.`,
+    composition: `Vertical, centered composition with the coin stack as the primary focal point, rising through the center of the frame. The growth chart line runs parallel on the right side, creating a dual-ascending visual rhythm. The shield at the base provides a grounded, stable foundation. Upper portion has clean negative space for text overlay. Symmetrical, stable, reassuring.`,
+    lighting: `Warm, trustworthy lighting from the upper-left, casting a golden glow across the coin stack and creating soft, realistic shadows to the lower-right. The coins have a metallic sheen with specular highlights, suggesting real gold. The shield has a subtle inner glow, suggesting protection and security. Background is softly lit, not dark but not bright. Mood: trustworthy, stable, prosperous.`,
+    colorPalette: `Coins: rich gold (#d4af37) with lighter highlights (#fbbf24) and darker shadows (#92400e). Shield: deep forest green (#166534) with gold trim. Growth chart: emerald green (#10b981). Background: soft cream (#fef3c7) with a subtle warm gradient. Color grading: warm, golden, premium, trustworthy. High-key but with rich gold tones.`,
+    style: `Semi-realistic 3D illustration with metallic rendering on the coins — proper specular highlights, reflections, and ambient occlusion. The shield and chart are cleaner, more graphic. Think premium banking app marketing meets fintech startup hero image. Solid, trustworthy, premium. Render at 4K with ray-traced reflections on the coin surfaces.`,
+    negativePrompt: `No text, no watermarks, no photorealistic money, no cluttered elements, no dark/moody lighting, no dull colors, no busy background, no distorted coins, no low-res, no flat shading on metal`,
+  },
+  'Health & Wellness': {
+    subject: `A serene figure in a meditation pose, sitting cross-legged, surrounded by a glowing aura of soft green light. Around the figure, organic leaf shapes and soft energy waves radiate outward in gentle, concentric ripples. The figure's eyes are closed, posture relaxed, hands resting on knees in a mudra position. A subtle lotus flower pattern is faintly visible in the aura behind the figure's head.`,
+    composition: `Perfectly centered, symmetrical composition with the meditating figure as the focal point. The aura and energy ripples create concentric circles that fill the frame, with the outermost ripples fading into the background. The lotus pattern behind the head creates a subtle mandala effect. Upper portion has clean space for text overlay. Balanced, harmonious, calm.`,
+    lighting: `Soft, diffused, ethereal lighting with no harsh shadows. The figure is lit by a gentle, omnidirectional glow — as if the aura itself is the light source. The energy ripples catch light along their edges, creating a luminous, layered effect. Background is softly lit with a gentle gradient. Mood: calm, restorative, peaceful, healing.`,
+    colorPalette: `Figure: soft, warm skin tones with a gentle green tint from the aura. Aura: sage green (#84cc16) and soft mint (#6ee7b7). Energy ripples: lighter green (#a7f3d0) fading to white. Background: very soft lavender (#e9d5ff) at the edges, transitioning to warm white (#fefce8) near the center. Color grading: soft, pastel, airy, gentle contrast, high-key.`,
+    style: `Minimalist botanical illustration style with subtle 3D depth. The figure is rendered in a clean, stylized manner — smooth, organic, flowing lines. The leaves and energy waves are semi-transparent, creating a layered, ethereal quality. Think premium wellness app marketing meets meditation app hero image. Clean, calming, restorative. Render at 4K with soft, diffused shadows.`,
+    negativePrompt: `No text, no watermarks, no photorealistic face, no harsh shadows, no dark colors, no cluttered elements, no busy patterns, no distorted anatomy, no low-res, no high-contrast lighting`,
+  },
+  'Technology & Innovation': {
+    subject: `Abstract geometric shapes — cubes, spheres, and interconnected planes — assembling themselves in mid-air, forming a futuristic, crystalline structure. Glowing connection nodes link the shapes, with holographic data layers visible as semi-transparent overlays. The structure is mid-assembly, with some shapes still floating toward their final position, suggesting a process of creation and innovation.`,
+    composition: `Dynamic, asymmetric composition with the assembling structure positioned at the left-third intersection. Floating shapes trail from the upper-right toward the structure, creating a natural visual flow. The holographic data layers add depth without overwhelming. Upper-right quadrant has negative space for text overlay. Dynamic, forward-looking, innovative.`,
+    lighting: `Holographic, volumetric lighting — each geometric shape emits its own subtle glow, while holographic data layers create light planes in the air. The dominant light is cool blue from the holographic elements, with warm amber accents on the connection nodes. Strong rim lighting on the geometric shapes, separating them from the dark background. Mood: futuristic, precise, innovative.`,
+    colorPalette: `Background: deep indigo (#1e1b4b) transitioning to near-black (#050510). Geometric shapes: deep blue (#3b82f6) with cyan (#06b6d4) edges. Connection nodes: warm amber (#f59e0b). Holographic layers: semi-transparent white-blue (#dbeafe at 30% opacity). Color grading: deep, rich shadows, vibrant cool highlights, subtle warm accents, HDR feel.`,
+    style: `High-end 3D render with glassmorphism and holographic effects. The geometric shapes have translucent, refractive surfaces with subsurface scattering. The holographic layers use additive blending for a true holographic feel. Think sci-fi film UI design meets premium tech product launch. Cutting-edge, precise, sophisticated. Render at 4K with ray-traced refractions and bloom.`,
+    negativePrompt: `No text, no watermarks, no photorealistic elements, no flat colors, no low-poly models, no cluttered composition, no dull lighting, no distorted geometry, no low-res, no pixelation`,
+  },
+  'Sales': {
+    subject: `A dynamic handshake at the center of the composition, with the two hands transforming into an upward-pointing arrow at the point of contact. Behind the handshake, subtle revenue chart lines rise diagonally, and small target/bullseye icons float in the background. The handshake is the moment of agreement — the catalyst for growth.`,
+    composition: `Centered composition with the handshake at the exact center, creating a powerful focal point. The arrow rises vertically from the handshake, creating upward momentum. Revenue chart lines run diagonally from lower-left to upper-right, reinforcing the growth theme. Target icons are scattered in the background at low opacity. Upper portion has clean space for text overlay. Dynamic, confident, results-oriented.`,
+    lighting: `Dramatic, directional lighting from the upper-left, creating strong highlights on the handshake and arrow. Deep shadows to the lower-right add drama and dimension. The revenue chart lines have a subtle glow, suggesting positive momentum. The target icons in the background are softly lit, not competing with the main subject. Mood: confident, energetic, high-stakes.`,
+    colorPalette: `Handshake and arrow: bold red (#dc2626) with lighter highlights (#f87171). Revenue chart lines: navy blue (#1e3a8a). Target icons: soft gray (#94a3b8) at low opacity. Background: clean white (#f8fafc) with a subtle warm gradient. Color grading: high-contrast, bold, energetic, clean. Professional but not sterile.`,
+    style: `Modern flat-design illustration with 3D depth via shading and layering. The handshake has slightly more dimensionality than the background elements, creating depth. The arrow has a subtle motion blur suggesting upward momentum. Think premium sales CRM marketing meets TED Talk slide design. Bold, confident, results-driven. Render at 4K with smooth gradients and crisp edges.`,
+    negativePrompt: `No text, no watermarks, no photorealistic hands, no cluttered elements, no dull colors, no flat composition, no random objects, no distorted anatomy, no low-res, no busy background`,
+  },
+  'Personal Branding': {
+    subject: `A striking silhouette of a person with a glowing, circular personal-logo halo behind their head, like a modern digital icon. Around the figure, floating content icons — a document, a video play button, a speech bubble, an article — orbit in a gentle, gravitational pattern. The figure stands confidently, facing forward, as if presenting to an audience.`,
+    composition: `Centered composition with the figure as the vertical focal point. The halo behind the head creates a powerful, iconic focal point — the visual anchor of the entire image. Orbiting content icons create a dynamic ring around the figure, suggesting reach and influence. Upper portion has clean space for text overlay. Iconic, memorable, identity-focused.`,
+    lighting: `The halo is the primary light source, emitting a warm, golden glow that illuminates the figure from behind, creating a striking rim-light effect. Soft fill light from the front preserves detail in the figure's silhouette. The orbiting icons have their own subtle glow. Background is dark, creating maximum contrast with the halo and figure. Mood: iconic, authoritative, memorable.`,
+    colorPalette: `Figure: dark silhouette (#1a1a2e) with golden rim lighting (#fbbf24). Halo: warm gold (#d4af37) with a brighter inner ring (#fef3c7). Orbiting icons: each in a different harmonious color — blue (#3b82f6), green (#22c55e), amber (#f59e0b), purple (#8b5cf6). Background: deep charcoal (#0f172a) with a subtle radial gradient toward the halo. Color grading: dramatic, high-contrast, premium, iconic.`,
+    style: `Modern editorial illustration with strong silhouette aesthetics. The figure is rendered as a clean, bold silhouette — no facial detail, just form and posture. The halo and icons are more detailed, creating a hierarchy. Think premium personal branding service marketing meets magazine cover design. Bold, iconic, memorable. Render at 4K with smooth gradients and bloom on the halo.`,
+    negativePrompt: `No text, no watermarks, no photorealistic face, no cluttered elements, no dull colors, no flat lighting, no busy background, no distorted proportions, no low-res, no low-contrast`,
+  },
+  'Remote Work': {
+    subject: `A cozy, well-lit home office scene seen from a slight isometric angle. On the desk: a laptop showing a video call interface, a steaming coffee mug, a small potted plant, and noise-canceling headphones. From the laptop, glowing dotted lines extend outward to connect with small global location pins floating in the surrounding space, suggesting a distributed team connected across distances.`,
+    composition: `Isometric perspective at approximately 25-degree tilt. The desk is positioned at the lower-center, with the laptop as the focal point. The connection lines extend upward and outward to location pins arranged in a loose arc, creating a sense of global reach. The plant and coffee mug add warmth and humanity. Upper portion has clean space for text overlay. Cozy, connected, productive.`,
+    lighting: `Warm, natural window light from the upper-left, creating soft, inviting illumination across the desk. The laptop screen emits a cool blue glow that contrasts with the warm ambient light. The connection lines and location pins have their own subtle luminescence. Soft, realistic shadows. Mood: warm, productive, connected, comfortable.`,
+    colorPalette: `Desk surface: warm wood tone (#d4a574). Laptop: matte gray (#64748b) with a cool blue screen (#3b82f6). Coffee mug: warm terracotta (#c2410c). Plant: sage green (#84cc16). Connection lines: soft teal (#14b8a6). Location pins: amber (#f59e0b). Background: soft cream (#fef3c7) with a subtle warm gradient. Color grading: warm, inviting, soft contrast, high-key.`,
+    style: `Isometric flat-design illustration with subtle 3D depth via soft shadows and layering. Clean, geometric shapes with rounded corners. The connection lines have a slight glow, suggesting digital connectivity. Think premium remote work tool marketing meets cozy productivity app hero image. Clean, warm, relatable. Render at 4K with smooth gradients and soft ambient occlusion.`,
+    negativePrompt: `No text, no watermarks, no photorealistic elements, no cluttered desk, no dull colors, no harsh shadows, no distorted perspective, no busy background, no low-res, no extra objects`,
+  },
+  'Startups & Innovation': {
+    subject: `A lightbulb at the center of the composition, transforming into a rocket as it rises upward — the filament of the bulb becomes the rocket's body, and the glass dome becomes the rocket's nose cone. Behind this transformation, a subtle background of brainstorming sticky notes and mechanical innovation gears, all softly out of focus. The transformation is mid-process, capturing the moment of ignition.`,
+    composition: `Vertical composition with the lightbulb-to-rocket transformation as the central focal point, rising through the frame. The transformation creates a powerful visual metaphor — idea becoming action. The background elements (sticky notes, gears) are blurred, creating depth and context without competing with the main subject. Upper portion has clean space for text overlay. Dynamic, energetic, innovative.`,
+    lighting: `The lightbulb-rocket is the primary light source, emitting a warm, intense glow from the filament-rocket core. This light illuminates the surrounding space, creating a dramatic, high-contrast scene. The background elements are softly lit by this glow, with no additional light sources. The ignition moment creates a burst of light at the transition point. Mood: energetic, innovative, explosive potential.`,
+    colorPalette: `Lightbulb-rocket: warm white (#fef3c7) at the glass dome, transitioning to intense amber (#f59e0b) and electric purple (#8b5cf6) at the ignition point. Background: deep indigo (#312e81) with subtle purple (#4c1d95) undertones. Sticky notes (background): faint yellow (#fde68a) and pink (#fbcfe8) at low opacity. Gears (background): faint gray (#94a3b8) at low opacity. Color grading: vibrant, high-contrast, energetic, HDR feel.`,
+    style: `Modern 3D illustration with dynamic transformation effects. The lightbulb-to-rocket transition is smooth and believable, with the filament morphing into the rocket body. Motion blur on the rising rocket suggests upward momentum. The background elements use depth-of-field blur. Think premium startup pitch deck hero image meets innovation summit keynote visual. Bold, energetic, innovative. Render at 4K with bloom on the ignition point and volumetric lighting.`,
+    negativePrompt: `No text, no watermarks, no photorealistic rocket, no cluttered elements, no dull colors, no flat lighting, no busy background, no distorted shapes, no low-res, no low-contrast`,
+  },
+}
+
+// ─── Tone-specific mood adaptations ─────────────────────────────────────────
+function getToneMood(tone: Tone): string {
+  const moodMap: Record<Tone, string> = {
+    'Educational': `Adjust the visual mood to feel informative and structured — clean lines, organized composition, balanced symmetry, and a sense of clarity and precision. The image should feel like a well-designed textbook cover or educational infographic.`,
+    'Inspirational': `Adjust the visual mood to feel uplifting and aspirational — warm golden lighting, a sense of height and elevation, and a composition that draws the eye upward. The image should evoke hope, possibility, and forward momentum.`,
+    'Opinionated': `Adjust the visual mood to feel bold and assertive — high contrast, strong angular shapes, dramatic lighting, and a composition that makes a visual statement. The image should feel confident, unapologetic, and commanding.`,
+    'Storytelling': `Adjust the visual mood to feel narrative and cinematic — layered depth, warm tones, atmospheric haze, and a composition that suggests a story unfolding. The image should feel like a film still or a moment captured mid-narrative.`,
+    'Motivational': `Adjust the visual mood to feel energetic and driving — vibrant saturated colors, dynamic diagonal composition, motion blur, and a sense of speed and momentum. The image should feel like a call to action, visually.`,
+    'Humorous / Witty': `Adjust the visual mood to feel playful and clever — bright, cheerful colors, whimsical proportions, a touch of visual humor in the iconography, while maintaining professional polish. The image should feel smart-funny, not silly.`,
+    'Professional / Formal': `Adjust the visual mood to feel polished and authoritative — restrained color palette, clean geometric composition, precise lighting, and a corporate-grade aesthetic. The image should feel like premium B2B marketing material.`,
+    'Conversational / Casual': `Adjust the visual mood to feel approachable and friendly — soft colors, rounded shapes, warm lighting, and a composition that feels inviting rather than imposing. The image should feel like a warm welcome.`,
+    'Bold / Provocative': `Adjust the visual mood to feel daring and attention-grabbing — extreme high contrast, dramatic chiaroscuro lighting, unconventional composition, and a color palette that pops. The image should stop the scroll.`,
+    'Analytical / Data-Driven': `Adjust the visual mood to feel precise and data-rich — clean grid elements, chart-like visual cues, structured layout, cool color palette, and a composition that feels organized and measurable. The image should feel like a premium data visualization.`,
+  }
+  return moodMap[tone] || moodMap['Educational']
+}
+
+// ─── Audience-specific visual context ────────────────────────────────────────
+function getAudienceContext(audience: Audience): string {
+  const contextMap: Record<Audience, string> = {
+    'Founders': `The visual should resonate with startup founders — use imagery of growth, building from scratch, and entrepreneurial ambition. Think pitch-deck aesthetic.`,
+    'Developers': `The visual should resonate with software developers — use clean, technical aesthetics with subtle code-like patterns and a polished, engineering-grade feel.`,
+    'Students': `The visual should resonate with students — use imagery of learning, growth, and potential, with a fresh, energetic aesthetic.`,
+    'Marketers': `The visual should resonate with marketing professionals — use vibrant, engagement-focused imagery with social media visual cues.`,
+    'Beginners': `The visual should resonate with beginners — use simple, approachable imagery that feels welcoming and not intimidating.`,
+    'Executives / C-Suite': `The visual should resonate with C-suite executives — use premium, authoritative imagery with a polished, high-end corporate aesthetic.`,
+    'Small Business Owners': `The visual should resonate with small business owners — use grounded, practical imagery with a warm, hardworking aesthetic.`,
+    'Freelancers': `The visual should resonate with freelancers — use imagery of independence, flexibility, and self-directed work.`,
+    'Content Creators': `The visual should resonate with content creators — use creative, expressive imagery with a social-media-native aesthetic.`,
+    'HR Professionals': `The visual should resonate with HR professionals — use people-focused, warm imagery with a professional, human-centered aesthetic.`,
+    'Sales Professionals': `The visual should resonate with sales professionals — use energetic, results-driven imagery with targets, growth, and momentum cues.`,
+    'General Public': `The visual should resonate with a broad general audience — use universally relatable imagery with a clean, accessible aesthetic.`,
+  }
+  return contextMap[audience] || contextMap['General Public']
+}
 
 function buildImagePrompt(theme: Theme, tone: Tone, audience: Audience): string {
-  const basePrompts: Record<Theme, string> = {
-    'Career Growth': `A modern, aspirational social media graphic showing a professional ascending a glowing staircase made of stacked achievement badges. Clean geometric composition with a deep navy-to-teal gradient background. Bold sans-serif headline text area at the top. Minimalist flat-design illustration style with subtle 3D depth. Professional corporate aesthetic suitable for LinkedIn. High contrast, crisp edges, 1:1 square format.`,
-    'Productivity': `A sleek social media infographic-style image showing a focused workspace with a clean desk, a glowing productivity timer, and organized task blocks floating in a grid layout. Warm amber and soft blue color palette. Modern flat illustration with isometric perspective. Subtle motion lines suggesting flow and efficiency. Professional, clean, high-engagement visual. 1:1 square format.`,
-    'Leadership': `A commanding social media graphic showing a stylized leader figure standing at the front of a group, with a glowing path radiating outward. Deep blue and gold color scheme conveying authority and trust. Minimalist editorial illustration style with strong silhouette contrast. Bold headline space at top. Professional, inspiring, suitable for LinkedIn and Facebook. 1:1 square format.`,
-    'AI': `A futuristic social media graphic showing a glowing neural network pattern overlaid on a stylized human silhouette, with data streams flowing into a central glowing core. Electric blue, purple-cyan gradient, and white highlight color palette. Modern tech aesthetic with circuit-board motifs and particle effects. Clean, high-tech, professional. Bold text area at top. 1:1 square format.`,
-    'Entrepreneurship': `A dynamic social media graphic showing a rocket launching from an open laptop, with growth-chart arrows and lightbulb icons orbiting around it. Vibrant orange, deep blue, and white color palette. Modern flat-design illustration with motion blur effects suggesting speed and ambition. Professional startup aesthetic. Bold headline space. 1:1 square format.`,
-    'Marketing': `A creative social media graphic showing a megaphone transforming into interconnected social media icons, with colorful engagement metrics (hearts, comments, shares) radiating outward. Vibrant gradient from coral pink to electric blue. Modern flat illustration style with playful energy. Clean composition with text area at top. Professional yet engaging. 1:1 square format.`,
-    'Personal Finance': `A clean, trustworthy social media graphic showing a stylized growth chart with a golden coin stack and a shield icon, symbolizing wealth building and protection. Forest green and gold color palette on a soft cream background. Modern flat-design with subtle isometric depth. Professional financial aesthetic. Bold headline space at top. 1:1 square format.`,
-    'Health & Wellness': `A calming social media graphic showing a serene figure in a meditation pose surrounded by glowing green leaves and soft energy waves. Sage green, soft lavender, and warm white color palette. Minimalist botanical illustration style with organic shapes. Clean, airy composition with text area at top. Professional wellness aesthetic. 1:1 square format.`,
-    'Technology & Innovation': `A cutting-edge social media graphic showing abstract geometric shapes assembling into a futuristic structure, with glowing connection nodes and holographic data layers. Deep indigo, cyan, and white color palette. Modern 3D-render style with glassmorphism effects. Tech-forward, innovative, professional. Bold text area at top. 1:1 square format.`,
-    'Sales': `A high-energy social media graphic showing a handshake transforming into an upward-pointing arrow, with subtle revenue-chart lines and target icons in the background. Bold red, navy blue, and white color palette. Modern flat illustration with dynamic diagonal composition suggesting momentum. Professional sales aesthetic. Headline space at top. 1:1 square format.`,
-    'Personal Branding': `A striking social media graphic showing a stylized silhouette of a person with a glowing personal logo/halo behind them, surrounded by floating content icons (posts, videos, articles). Warm gold, deep charcoal, and white color palette. Modern editorial illustration style. Professional, memorable, identity-focused. Bold headline space. 1:1 square format.`,
-    'Remote Work': `A modern social media graphic showing a cozy home office setup with a laptop, coffee cup, and plant, connected by glowing dotted lines to global location pins. Soft teal, warm orange, and cream color palette. Flat illustration style with isometric perspective. Clean, relatable, professional. Text area at top. 1:1 square format.`,
-    'Startups & Innovation': `An energetic social media graphic showing a lightbulb transforming into a rocket, with brainstorming sticky notes and innovation gears in the background. Electric purple, lime green, and white color palette. Modern flat-design with dynamic composition. Startup-energy aesthetic, bold and forward-looking. Headline space at top. 1:1 square format.`,
-  }
+  const parts = THEME_PROMPT_PARTS[theme] || THEME_PROMPT_PARTS['Productivity']
+  const toneMood = getToneMood(tone)
+  const audienceContext = getAudienceContext(audience)
 
-  const toneMood: Record<Tone, string> = {
-    'Educational': 'The mood should feel informative, clear, and structured — like a well-designed textbook cover.',
-    'Inspirational': 'The mood should feel uplifting and aspirational — warm lighting, hopeful energy.',
-    'Opinionated': 'The mood should feel bold and confident — high contrast, strong angles, assertive composition.',
-    'Storytelling': 'The mood should feel narrative and evocative — warm tones, layered depth, cinematic quality.',
-    'Motivational': 'The mood should feel energetic and driving — vibrant colors, dynamic motion lines, forward momentum.',
-    'Humorous / Witty': 'The mood should feel playful and clever — bright colors, whimsical elements, a touch of fun without being unprofessional.',
-    'Professional / Formal': 'The mood should feel polished and authoritative — restrained color palette, clean lines, corporate-grade design.',
-    'Conversational / Casual': 'The mood should feel approachable and friendly — soft colors, rounded shapes, warm and inviting.',
-    'Bold / Provocative': 'The mood should feel daring and attention-grabbing — high contrast, dramatic lighting, unconventional composition.',
-    'Analytical / Data-Driven': 'The mood should feel precise and data-rich — clean grids, chart elements, structured layout, cool color palette.',
-  }
+  return `【 SUBJECT & SCENE 】
+${parts.subject}
 
-  const audienceContext = `The visual should resonate with ${audience.toLowerCase()} — use imagery and metaphors from their world.`
+【 COMPOSITION 】
+${parts.composition}
 
-  return `${basePrompts[theme]}
+【 LIGHTING 】
+${parts.lighting}
 
-Style: Modern professional social media graphic, high engagement, suitable for LinkedIn, X, and Facebook.
-Tone: ${toneMood[tone]}
-Audience: ${audienceContext}
-Include key message visually through iconography and composition, not through cluttered text.
-Color palette should be cohesive and brand-safe. Avoid cluttered layouts — use generous whitespace.
-Render quality: high-resolution, sharp, print-ready crispness. Aspect ratio: 1:1 square.`
+【 COLOR PALETTE 】
+${parts.colorPalette}
+
+【 STYLE & RENDERING 】
+${parts.style}
+
+【 TONE ADAPTATION — ${tone} 】
+${toneMood}
+
+【 AUDIENCE RESONANCE — ${audience} 】
+${audienceContext}
+
+【 TECHNICAL SPECIFICATIONS 】
+• Aspect ratio: 1:1 square (1080×1080px for social media)
+• Resolution: 4K minimum, anti-aliased edges
+• Format: High-quality digital illustration / 3D render
+• Text overlay area: Reserve upper 25% of frame with clean negative space
+• Visual hierarchy: Single clear focal point, supporting elements at lower visual weight
+• Color depth: Full RGB, HDR-capable, no banding in gradients
+• Export: PNG with transparency support for background elements
+
+【 NEGATIVE PROMPT — Exclude 】
+${parts.negativePrompt}`
 }
 
 // ─── Content insights per theme ─────────────────────────────────────────────
@@ -301,7 +457,6 @@ export function buildDemoResult(values: GenerationFormValues, videoId: string | 
     ? `My own take, which I asked the system to weave in: ${humanOpinion.trim()}`
     : `And the contrarian angle worth sitting with: ${contrarian[0]}`
 
-  // LinkedIn: 200-300 words
   const linkedinPost = [
     `${hook}`,
     ``,
@@ -323,10 +478,8 @@ export function buildDemoResult(values: GenerationFormValues, videoId: string | 
     `#${theme.replace(/\s+/g, '')} #${audience.replace(/[\s/]/g, '')} #ContentStrategy #${tone.split(/[\s/]/)[0]} #CareerGrowth`,
   ].join('\n')
 
-  // X: <=280 characters
   const xPost = `${hook}\n\nFor ${audience}: ${theme}, ${tone.toLowerCase()} angle.\n${contrarian[0]}\n\n${sourceUrl} #${theme.replace(/\s+/g, '')}`.slice(0, 280)
 
-  // Facebook: 150-250 words, conversational, emojis
   const facebookPost = [
     `${hook} 👇`,
     ``,
@@ -342,7 +495,6 @@ export function buildDemoResult(values: GenerationFormValues, videoId: string | 
     `Watch the source here: ${sourceUrl}`,
   ].join('\n')
 
-  // Blog: 500-800 words, Markdown
   const blogPost = [
     `# ${theme}: A ${tone} Breakdown for ${audience}`,
     ``,

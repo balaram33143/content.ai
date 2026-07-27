@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useLocation, Link } from 'react-router-dom'
-import { ArrowLeft, Copy, Check, ExternalLink, Image as ImageIcon, Wand2 } from 'lucide-react'
+import { ArrowLeft, Copy, Check, ExternalLink, Image as ImageIcon, Wand as Wand2 } from 'lucide-react'
 import { getGeneration } from '../lib/generations'
 import { buildEmailHtml, buildEmailSubject } from '../lib/email-template'
 import type { GenerationRecord, GenerationResult, GenerationFormValues } from '../types'
@@ -84,7 +84,6 @@ export default function ResultsPage() {
       <h1 className="text-2xl md:text-3xl font-bold text-neutral-900 mb-2">Your Generated Content</h1>
       <p className="text-neutral-500 mb-6">Review, copy, and download your content below.</p>
 
-      {/* Generated Image */}
       {result.imageUrl && (
         <div className="mb-6 bg-white rounded-xl shadow-sm border border-neutral-200 p-4">
           <div className="flex items-center gap-2 mb-3">
@@ -95,7 +94,6 @@ export default function ResultsPage() {
         </div>
       )}
 
-      {/* Image Generation Prompt */}
       {result.imagePrompt && (
         <div className="mb-6 bg-white rounded-xl shadow-sm border border-neutral-200 p-5">
           <div className="flex items-center justify-between mb-3">
@@ -111,13 +109,12 @@ export default function ResultsPage() {
               {copied === 'imagePrompt' ? 'Copied!' : 'Copy'}
             </button>
           </div>
-          <div className="text-sm text-neutral-700 whitespace-pre-wrap leading-relaxed bg-purple-50 border border-purple-100 p-4 rounded-lg">
+          <div className="text-sm text-neutral-700 whitespace-pre-wrap leading-relaxed bg-purple-50 border border-purple-100 p-4 rounded-lg max-h-96 overflow-y-auto">
             {result.imagePrompt}
           </div>
         </div>
       )}
 
-      {/* Links */}
       <div className="mb-6 flex flex-wrap gap-3">
         {result.reportUrl && (
           <a href={result.reportUrl} target="_blank" rel="noopener noreferrer"
@@ -133,7 +130,6 @@ export default function ResultsPage() {
         )}
       </div>
 
-      {/* Platform Posts */}
       <div className="space-y-4">
         {posts.map(post => (
           <div key={post.key} className="bg-white rounded-xl shadow-sm border border-neutral-200 p-5">
@@ -156,7 +152,6 @@ export default function ResultsPage() {
         ))}
       </div>
 
-      {/* Email Preview */}
       {emailHtml && (
         <div className="mt-6 bg-white rounded-xl shadow-sm border border-neutral-200 p-5">
           <h2 className="flex items-center gap-2 font-semibold text-neutral-800 mb-1">
