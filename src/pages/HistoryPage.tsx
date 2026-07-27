@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { History, Search, Trash2, ExternalLink, Loader2 } from 'lucide-react'
+import { History, Search, Trash2, ExternalLink, Loader as Loader2 } from 'lucide-react'
 import { fetchHistory, deleteGeneration } from '../lib/generations'
 import type { GenerationRecord } from '../types'
 

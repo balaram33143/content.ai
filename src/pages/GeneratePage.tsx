@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Sparkles, Loader2, Youtube, Mail, Palette, Target, Users, Lightbulb, Check } from 'lucide-react'
+import { Sparkles, Loader as Loader2, Youtube, Mail, Palette, Target, Users, Lightbulb, Check } from 'lucide-react'
 import { PLATFORMS, TONES, THEMES, AUDIENCES } from '../config'
 import { buildDemoResult } from '../lib/demo-content'
 import { buildEmailHtml, buildEmailSubject } from '../lib/email-template'
