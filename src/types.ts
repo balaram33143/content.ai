@@ -59,6 +59,7 @@ export interface GenerationResult {
   facebookPost: string
   blogPost: string
   imageUrl: string
+  imagePrompt: string
   reportUrl: string
   folderUrl: string
   metadataFileUrl: string
@@ -80,6 +81,7 @@ export interface GenerationRecord {
   facebook_post: string | null
   blog_post: string | null
   image_url: string | null
+  image_prompt: string | null
   report_url: string | null
   folder_url: string | null
   metadata_file_url: string | null

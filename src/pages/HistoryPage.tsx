@@ -58,7 +58,6 @@ export default function HistoryPage() {
         <p className="mt-2 text-neutral-500">View and manage your past content generations.</p>
       </div>
 
-      {/* Search & Filter */}
       <form onSubmit={handleSearch} className="mb-4 flex gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
@@ -124,7 +123,6 @@ export default function HistoryPage() {
             ))}
           </div>
 
-          {/* Pagination */}
           {totalPages > 1 && (
             <div className="mt-6 flex items-center justify-center gap-2">
               <button

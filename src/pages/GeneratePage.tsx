@@ -3,9 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { Sparkles, Loader as Loader2, Youtube, Mail, Palette, Target, Users, Lightbulb, Check } from 'lucide-react'
 import { PLATFORMS, TONES, THEMES, AUDIENCES } from '../config'
 import { buildDemoResult } from '../lib/demo-content'
-import { buildEmailHtml, buildEmailSubject } from '../lib/email-template'
 import { createGeneration, completeGeneration, failGeneration } from '../lib/generations'
-import type { GenerationFormValues, Platform, Tone, Theme, Audience, GenerationResult } from '../types'
+import type { GenerationFormValues, Platform, Tone, Theme, Audience } from '../types'
 
 function extractVideoId(url: string): string | null {
   const match = url.match(/(?:v=|\/)([0-9A-Za-z_-]{11})/)
@@ -50,24 +49,20 @@ export default function GeneratePage() {
       }
       const videoId = extractVideoId(values.youtubeUrl)
 
-      // Create DB record
       const record = await createGeneration(values, videoId)
 
-      // Generate content locally (demo mode — no n8n needed)
       await new Promise(r => setTimeout(r, 1500))
       const result = buildDemoResult(values, videoId)
 
-      // Update DB with results
       if (record) {
         await completeGeneration(record.id, result)
         navigate(`/results/${record.id}`)
       } else {
-        // No DB — still show results via state
         navigate(`/results/local`, { state: { result, values } })
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
-    } finally {
+      const msg = err instanceof Error ? err.message : 'Something went wrong. Please try again.'
+      setError(msg)
       setLoading(false)
     }
   }
@@ -93,7 +88,6 @@ export default function GeneratePage() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6 bg-white rounded-xl shadow-sm border border-neutral-200 p-6">
-        {/* YouTube URL */}
         <div>
           <label className="flex items-center gap-2 text-sm font-semibold text-neutral-700 mb-2">
             <Youtube className="w-4 h-4 text-accent-600" />
@@ -109,7 +103,6 @@ export default function GeneratePage() {
           />
         </div>
 
-        {/* Email */}
         <div>
           <label className="flex items-center gap-2 text-sm font-semibold text-neutral-700 mb-2">
             <Mail className="w-4 h-4 text-primary-600" />
@@ -125,7 +118,6 @@ export default function GeneratePage() {
           />
         </div>
 
-        {/* Platforms */}
         <div>
           <label className="flex items-center gap-2 text-sm font-semibold text-neutral-700 mb-2">
             <Check className="w-4 h-4 text-green-600" />
@@ -149,7 +141,6 @@ export default function GeneratePage() {
           </div>
         </div>
 
-        {/* Tone */}
         <div>
           <label className="flex items-center gap-2 text-sm font-semibold text-neutral-700 mb-2">
             <Palette className="w-4 h-4 text-purple-600" />
@@ -164,7 +155,6 @@ export default function GeneratePage() {
           </select>
         </div>
 
-        {/* Theme */}
         <div>
           <label className="flex items-center gap-2 text-sm font-semibold text-neutral-700 mb-2">
             <Target className="w-4 h-4 text-orange-600" />
@@ -179,7 +169,6 @@ export default function GeneratePage() {
           </select>
         </div>
 
-        {/* Audience */}
         <div>
           <label className="flex items-center gap-2 text-sm font-semibold text-neutral-700 mb-2">
             <Users className="w-4 h-4 text-blue-600" />
@@ -194,7 +183,6 @@ export default function GeneratePage() {
           </select>
         </div>
 
-        {/* Human Opinion */}
         <div>
           <label className="flex items-center gap-2 text-sm font-semibold text-neutral-700 mb-2">
             <Lightbulb className="w-4 h-4 text-yellow-600" />
@@ -209,7 +197,6 @@ export default function GeneratePage() {
           />
         </div>
 
-        {/* Submit */}
         <button
           type="submit"
           disabled={loading}

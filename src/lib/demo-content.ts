@@ -1,5 +1,6 @@
 import type { GenerationFormValues, GenerationResult, Theme, Tone, Audience } from '../types'
 
+// ─── Theme-specific stock images ───────────────────────────────────────────
 const THEME_IMAGES: Record<Theme, string[]> = {
   'Career Growth': [
     'https://images.pexels.com/photos/3184465/pexels-photo-3184465.jpeg',
@@ -22,14 +23,14 @@ const THEME_IMAGES: Record<Theme, string[]> = {
     'https://images.pexels.com/photos/1036641/pexels-photo-1036641.jpeg',
   ],
   'Entrepreneurship': [
-    'https://images.pexels.com/photos/3184292/pexels-photo-3184292.jpeg',
     'https://images.pexels.com/photos/3756766/pexels-photo-3756766.jpeg',
     'https://images.pexels.com/photos/7376/startup-photos.jpg',
+    'https://images.pexels.com/photos/3184292/pexels-photo-3184292.jpeg',
   ],
   'Marketing': [
     'https://images.pexels.com/photos/265087/pexels-photo-265087.jpeg',
     'https://images.pexels.com/photos/905163/pexels-photo-905163.jpeg',
-    'https://images.pexels.com/photos/265087/pexels-photo-265087.jpeg',
+    'https://images.pexels.com/photos/3184339/pexels-photo-3184339.jpeg',
   ],
   'Personal Finance': [
     'https://images.pexels.com/photos/4968391/pexels-photo-4968391.jpeg',
@@ -77,6 +78,56 @@ function pickImage(theme: Theme, seed: string): string {
   return pool[hash % pool.length]
 }
 
+// ─── Improved AI image generation prompts ────────────────────────────────────
+// Matches the v4 workflow node 15 "Image_Prompt_Generator" which generates
+// a professional social media image prompt based on the platform content.
+// Each theme gets a detailed, visually rich prompt with composition,
+// color palette, style, and mood guidance.
+
+function buildImagePrompt(theme: Theme, tone: Tone, audience: Audience): string {
+  const basePrompts: Record<Theme, string> = {
+    'Career Growth': `A modern, aspirational social media graphic showing a professional ascending a glowing staircase made of stacked achievement badges. Clean geometric composition with a deep navy-to-teal gradient background. Bold sans-serif headline text area at the top. Minimalist flat-design illustration style with subtle 3D depth. Professional corporate aesthetic suitable for LinkedIn. High contrast, crisp edges, 1:1 square format.`,
+    'Productivity': `A sleek social media infographic-style image showing a focused workspace with a clean desk, a glowing productivity timer, and organized task blocks floating in a grid layout. Warm amber and soft blue color palette. Modern flat illustration with isometric perspective. Subtle motion lines suggesting flow and efficiency. Professional, clean, high-engagement visual. 1:1 square format.`,
+    'Leadership': `A commanding social media graphic showing a stylized leader figure standing at the front of a group, with a glowing path radiating outward. Deep blue and gold color scheme conveying authority and trust. Minimalist editorial illustration style with strong silhouette contrast. Bold headline space at top. Professional, inspiring, suitable for LinkedIn and Facebook. 1:1 square format.`,
+    'AI': `A futuristic social media graphic showing a glowing neural network pattern overlaid on a stylized human silhouette, with data streams flowing into a central glowing core. Electric blue, purple-cyan gradient, and white highlight color palette. Modern tech aesthetic with circuit-board motifs and particle effects. Clean, high-tech, professional. Bold text area at top. 1:1 square format.`,
+    'Entrepreneurship': `A dynamic social media graphic showing a rocket launching from an open laptop, with growth-chart arrows and lightbulb icons orbiting around it. Vibrant orange, deep blue, and white color palette. Modern flat-design illustration with motion blur effects suggesting speed and ambition. Professional startup aesthetic. Bold headline space. 1:1 square format.`,
+    'Marketing': `A creative social media graphic showing a megaphone transforming into interconnected social media icons, with colorful engagement metrics (hearts, comments, shares) radiating outward. Vibrant gradient from coral pink to electric blue. Modern flat illustration style with playful energy. Clean composition with text area at top. Professional yet engaging. 1:1 square format.`,
+    'Personal Finance': `A clean, trustworthy social media graphic showing a stylized growth chart with a golden coin stack and a shield icon, symbolizing wealth building and protection. Forest green and gold color palette on a soft cream background. Modern flat-design with subtle isometric depth. Professional financial aesthetic. Bold headline space at top. 1:1 square format.`,
+    'Health & Wellness': `A calming social media graphic showing a serene figure in a meditation pose surrounded by glowing green leaves and soft energy waves. Sage green, soft lavender, and warm white color palette. Minimalist botanical illustration style with organic shapes. Clean, airy composition with text area at top. Professional wellness aesthetic. 1:1 square format.`,
+    'Technology & Innovation': `A cutting-edge social media graphic showing abstract geometric shapes assembling into a futuristic structure, with glowing connection nodes and holographic data layers. Deep indigo, cyan, and white color palette. Modern 3D-render style with glassmorphism effects. Tech-forward, innovative, professional. Bold text area at top. 1:1 square format.`,
+    'Sales': `A high-energy social media graphic showing a handshake transforming into an upward-pointing arrow, with subtle revenue-chart lines and target icons in the background. Bold red, navy blue, and white color palette. Modern flat illustration with dynamic diagonal composition suggesting momentum. Professional sales aesthetic. Headline space at top. 1:1 square format.`,
+    'Personal Branding': `A striking social media graphic showing a stylized silhouette of a person with a glowing personal logo/halo behind them, surrounded by floating content icons (posts, videos, articles). Warm gold, deep charcoal, and white color palette. Modern editorial illustration style. Professional, memorable, identity-focused. Bold headline space. 1:1 square format.`,
+    'Remote Work': `A modern social media graphic showing a cozy home office setup with a laptop, coffee cup, and plant, connected by glowing dotted lines to global location pins. Soft teal, warm orange, and cream color palette. Flat illustration style with isometric perspective. Clean, relatable, professional. Text area at top. 1:1 square format.`,
+    'Startups & Innovation': `An energetic social media graphic showing a lightbulb transforming into a rocket, with brainstorming sticky notes and innovation gears in the background. Electric purple, lime green, and white color palette. Modern flat-design with dynamic composition. Startup-energy aesthetic, bold and forward-looking. Headline space at top. 1:1 square format.`,
+  }
+
+  const toneMood: Record<Tone, string> = {
+    'Educational': 'The mood should feel informative, clear, and structured — like a well-designed textbook cover.',
+    'Inspirational': 'The mood should feel uplifting and aspirational — warm lighting, hopeful energy.',
+    'Opinionated': 'The mood should feel bold and confident — high contrast, strong angles, assertive composition.',
+    'Storytelling': 'The mood should feel narrative and evocative — warm tones, layered depth, cinematic quality.',
+    'Motivational': 'The mood should feel energetic and driving — vibrant colors, dynamic motion lines, forward momentum.',
+    'Humorous / Witty': 'The mood should feel playful and clever — bright colors, whimsical elements, a touch of fun without being unprofessional.',
+    'Professional / Formal': 'The mood should feel polished and authoritative — restrained color palette, clean lines, corporate-grade design.',
+    'Conversational / Casual': 'The mood should feel approachable and friendly — soft colors, rounded shapes, warm and inviting.',
+    'Bold / Provocative': 'The mood should feel daring and attention-grabbing — high contrast, dramatic lighting, unconventional composition.',
+    'Analytical / Data-Driven': 'The mood should feel precise and data-rich — clean grids, chart elements, structured layout, cool color palette.',
+  }
+
+  const audienceContext = `The visual should resonate with ${audience.toLowerCase()} — use imagery and metaphors from their world.`
+
+  return `${basePrompts[theme]}
+
+Style: Modern professional social media graphic, high engagement, suitable for LinkedIn, X, and Facebook.
+Tone: ${toneMood[tone]}
+Audience: ${audienceContext}
+Include key message visually through iconography and composition, not through cluttered text.
+Color palette should be cohesive and brand-safe. Avoid cluttered layouts — use generous whitespace.
+Render quality: high-resolution, sharp, print-ready crispness. Aspect ratio: 1:1 square.`
+}
+
+// ─── Content insights per theme ─────────────────────────────────────────────
+
 interface Insight { title: string; body: string }
 
 function buildInsights(theme: Theme, audience: Audience): Insight[] {
@@ -119,7 +170,7 @@ function buildInsights(theme: Theme, audience: Audience): Insight[] {
     'Marketing': [
       { title: 'Attention is the currency', body: `For ${audience.toLowerCase()}, the battle is not for budget — it is for attention. Every marketing decision should be filtered through one question: does this earn or lose attention?` },
       { title: 'Storytelling outperforms features', body: `Feature lists are forgettable. Stories are sticky. ${audience.toLowerCase()} who lead with narrative and weave features into the story out-convert those who lead with specs.` },
-      { title: 'Distribution channels compound', body: `A great campaign on a owned channel (email, SMS, social) costs less over time as the audience grows. Rented channels (ads) only get more expensive. Build owned media early.` },
+      { title: 'Distribution channels compound', body: `A great campaign on an owned channel (email, SMS, social) costs less over time as the audience grows. Rented channels (ads) only get more expensive. Build owned media early.` },
       { title: 'Data without intuition is dangerous', body: `Dashboards tell you what happened, not why. ${audience.toLowerCase()} who pair quantitative data with qualitative customer conversations make better calls than those who rely on either alone.` },
       { title: 'Brand is a long-term moat', body: `Performance marketing is rented attention. Brand is owned attention. The best marketing portfolios balance both — brand for the long game, performance for the short game.` },
     ],
@@ -173,7 +224,6 @@ function buildInsights(theme: Theme, audience: Audience): Insight[] {
       { title: 'Culture is set in the first 10 hires', body: `The first 10 hires define the culture for the next 100. ${audience.toLowerCase()} who are ruthlessly selective about cultural fit in the early team build organizations that retain talent.` },
     ],
   }
-
   return map[theme] || map['Productivity']
 }
 
@@ -244,6 +294,7 @@ export function buildDemoResult(values: GenerationFormValues, videoId: string | 
   const contrarian = buildContrarian(theme)
   const hooks = buildHooks(theme, tone, audience)
   const flourish = toneFlourish(tone)
+  const imagePrompt = buildImagePrompt(theme, tone, audience)
 
   const hook = hooks[0]
   const opinionLine = humanOpinion?.trim()
@@ -342,6 +393,7 @@ export function buildDemoResult(values: GenerationFormValues, videoId: string | 
     facebookPost,
     blogPost,
     imageUrl,
+    imagePrompt,
     reportUrl: `https://docs.google.com/document/d/${docId}/edit`,
     folderUrl: `https://drive.google.com/drive/folders/${folderId}`,
     metadataFileUrl: `https://drive.google.com/file/d/demo-meta-${vid}/view`,

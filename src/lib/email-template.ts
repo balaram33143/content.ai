@@ -1,6 +1,6 @@
 import type { GenerationResult, GenerationFormValues } from '../types'
 
-export function buildEmailHtml(result: GenerationResult, values: GenerationFormValues): string {
+export function buildEmailHtml(result: GenerationResult, _values: GenerationFormValues): string {
   return `<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto;">
   <h1 style="color: #2c3e50;">Your Content is Ready! 🎉</h1>
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useLocation, Link } from 'react-router-dom'
-import { ArrowLeft, Copy, Check, Download, ExternalLink, Image as ImageIcon } from 'lucide-react'
+import { ArrowLeft, Copy, Check, ExternalLink, Image as ImageIcon, Wand2 } from 'lucide-react'
 import { getGeneration } from '../lib/generations'
 import { buildEmailHtml, buildEmailSubject } from '../lib/email-template'
 import type { GenerationRecord, GenerationResult, GenerationFormValues } from '../types'
@@ -51,6 +51,7 @@ export default function ResultsPage() {
     facebookPost: record.facebook_post || '',
     blogPost: record.blog_post || '',
     imageUrl: record.image_url || '',
+    imagePrompt: record.image_prompt || '',
     reportUrl: record.report_url || '',
     folderUrl: record.folder_url || '',
     metadataFileUrl: record.metadata_file_url || '',
@@ -91,6 +92,28 @@ export default function ResultsPage() {
             <h2 className="font-semibold text-neutral-800">Generated Image</h2>
           </div>
           <img src={result.imageUrl} alt="Generated content" className="w-full rounded-lg" />
+        </div>
+      )}
+
+      {/* Image Generation Prompt */}
+      {result.imagePrompt && (
+        <div className="mb-6 bg-white rounded-xl shadow-sm border border-neutral-200 p-5">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="flex items-center gap-2 font-semibold text-neutral-800">
+              <Wand2 className="w-5 h-5 text-purple-600" />
+              AI Image Generation Prompt
+            </h2>
+            <button
+              onClick={() => copy(result.imagePrompt, 'imagePrompt')}
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-neutral-600 hover:bg-neutral-100 transition"
+            >
+              {copied === 'imagePrompt' ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
+              {copied === 'imagePrompt' ? 'Copied!' : 'Copy'}
+            </button>
+          </div>
+          <div className="text-sm text-neutral-700 whitespace-pre-wrap leading-relaxed bg-purple-50 border border-purple-100 p-4 rounded-lg">
+            {result.imagePrompt}
+          </div>
         </div>
       )}
 

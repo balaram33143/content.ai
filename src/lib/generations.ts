@@ -9,28 +9,37 @@ export async function createGeneration(
   values: GenerationFormValues,
   videoId: string | null,
 ): Promise<GenerationRecord | null> {
-  if (!isSupabaseConfigured || !supabase) return null
+  if (!isSupabaseConfigured || !supabase) {
+    console.warn('[generations] Supabase not configured — skipping DB insert')
+    return null
+  }
+
+  const insertPayload = {
+    youtube_url: values.youtubeUrl,
+    email: values.email,
+    platforms: platformsToString(values.platforms),
+    tone: values.tone,
+    theme: values.theme,
+    audience: values.audience,
+    human_opinion: values.humanOpinion || null,
+    video_id: videoId,
+    status: 'running' as GenerationStatus,
+  }
+
+  console.log('[generations] Inserting record:', insertPayload)
 
   const { data, error } = await supabase
     .from('generations')
-    .insert({
-      youtube_url: values.youtubeUrl,
-      email: values.email,
-      platforms: platformsToString(values.platforms),
-      tone: values.tone,
-      theme: values.theme,
-      audience: values.audience,
-      human_opinion: values.humanOpinion || null,
-      video_id: videoId,
-      status: 'running' as GenerationStatus,
-    })
+    .insert(insertPayload)
     .select()
     .single()
 
   if (error) {
-    console.error('Failed to create generation record:', error)
+    console.error('[generations] Insert failed:', error.message, error.details)
     return null
   }
+
+  console.log('[generations] Inserted record id:', data?.id)
   return data as unknown as GenerationRecord
 }
 
@@ -44,7 +53,9 @@ export async function updateGeneration(
     .from('generations')
     .update({ ...updates, updated_at: new Date().toISOString() })
     .eq('id', id)
-  if (error) console.error('Failed to update generation:', error)
+
+  if (error) console.error('[generations] Update failed:', error.message)
+  else console.log('[generations] Updated record:', id)
 }
 
 export async function completeGeneration(
@@ -58,6 +69,7 @@ export async function completeGeneration(
     facebook_post: result.facebookPost,
     blog_post: result.blogPost,
     image_url: result.imageUrl,
+    image_prompt: result.imagePrompt,
     report_url: result.reportUrl,
     folder_url: result.folderUrl,
     metadata_file_url: result.metadataFileUrl,
@@ -79,8 +91,9 @@ export async function getGeneration(id: string): Promise<GenerationRecord | null
     .select('*')
     .eq('id', id)
     .maybeSingle()
+
   if (error) {
-    console.error('Failed to fetch generation:', error)
+    console.error('[generations] Fetch failed:', error.message)
     return null
   }
   return data as unknown as GenerationRecord | null
@@ -98,7 +111,10 @@ export async function fetchHistory(filters: HistoryFilters): Promise<{
   records: GenerationRecord[]
   total: number
 }> {
-  if (!isSupabaseConfigured || !supabase) return { records: [], total: 0 }
+  if (!isSupabaseConfigured || !supabase) {
+    console.warn('[generations] Supabase not configured — returning empty history')
+    return { records: [], total: 0 }
+  }
 
   const { search, status, sortBy = 'newest', page = 1, pageSize = 8 } = filters
   const from = (page - 1) * pageSize
@@ -120,9 +136,11 @@ export async function fetchHistory(filters: HistoryFilters): Promise<{
   const { data, error, count } = await query
 
   if (error) {
-    console.error('Failed to fetch history:', error)
+    console.error('[generations] History fetch failed:', error.message)
     return { records: [], total: 0 }
   }
+
+  console.log('[generations] History fetched:', data?.length, 'records, total:', count)
   return { records: (data as unknown as GenerationRecord[]) || [], total: count || 0 }
 }
 
@@ -131,8 +149,9 @@ export async function deleteGeneration(id: string): Promise<boolean> {
 
   const { error } = await supabase.from('generations').delete().eq('id', id)
   if (error) {
-    console.error('Failed to delete generation:', error)
+    console.error('[generations] Delete failed:', error.message)
     return false
   }
+  console.log('[generations] Deleted record:', id)
   return true
 }

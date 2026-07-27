@@ -45,10 +45,3 @@ export const AUDIENCES: Audience[] = [
   'Sales Professionals',
   'General Public',
 ]
-
-export const PLATFORM_ICONS: Record<Platform, string> = {
-  LinkedIn: 'in',
-  X: 'X',
-  Facebook: 'f',
-  Blog: 'B',
-}

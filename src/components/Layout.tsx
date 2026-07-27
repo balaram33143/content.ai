@@ -1,5 +1,5 @@
 import { Outlet, NavLink, useLocation } from 'react-router-dom'
-import { Sparkles, History, Github } from 'lucide-react'
+import { Sparkles, History } from 'lucide-react'
 
 export default function Layout() {
   const location = useLocation()
@@ -10,7 +10,6 @@ export default function Layout() {
 
   return (
     <div className="flex min-h-screen bg-neutral-50">
-      {/* Sidebar */}
       <aside className="hidden md:flex w-64 flex-col bg-neutral-900 text-white">
         <div className="px-6 py-6 border-b border-neutral-800">
           <div className="flex items-center gap-2">
@@ -52,7 +51,6 @@ export default function Layout() {
         </div>
       </aside>
 
-      {/* Mobile header */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-10 bg-neutral-900 text-white px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center">
@@ -78,12 +76,10 @@ export default function Layout() {
         </nav>
       </div>
 
-      {/* Main content */}
       <main className="flex-1 md:pt-0 pt-14 overflow-auto">
         <div className="max-w-5xl mx-auto px-4 py-6 md:py-10">
           <Outlet />
         </div>
-        {/* Footer credit */}
         <footer className="md:hidden border-t border-neutral-200 bg-white px-4 py-3 text-center">
           <p className="text-xs text-neutral-500">
             Built for automated content creation. Powered by Balaram varma
